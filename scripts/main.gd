@@ -1,10 +1,14 @@
 extends Control
-## Pantalla principal (GDD §9.1-9.3, §9.7). La UI se arma por código mientras el arte y
-## el diseño de interfaz son placeholders; se migrará a escenas cuando llegue el arte final.
+## Pantalla principal (GDD §9.1-9.3, §9.7). La UI se arma por código; los sprites salen de
+## assets/sprites (generados con tools/sprites). Si falta un sprite se usa un color de respaldo.
 
 const BLOCK_SIZE := 32
 const BLOCK_SCALE := 3
-## Oscurecimiento del bloque en sus 3 etapas de grieta (GDD §10: 3 etapas por bloque).
+const CHARACTER_SCALE := 2
+const SPRITES := "res://assets/sprites/"
+## Variantes de bloque por bioma (assets/sprites/blocks/<bioma>_<variante>.png).
+const BLOCK_VARIANTS: Array[String] = ["a", "b", "c"]
+## Oscurecimiento del color de respaldo en las 3 etapas de grieta (GDD §10).
 const CRACK_DARKEN: Array[float] = [0.0, 0.18, 0.34, 0.5]
 const MAX_FLOATING_LABELS := 12
 
@@ -12,7 +16,12 @@ var _depth_label: Label
 var _biome_label: Label
 var _gold_label: Label
 var _stats_label: Label
-var _block: ColorRect
+var _block: Control
+var _block_fallback: ColorRect
+var _block_texture: TextureRect
+var _crack: TextureRect
+var _crack_textures: Array[Texture2D] = []
+var _excavator: TextureRect
 var _block_holder: Control
 var _hp_bar: ProgressBar
 var _float_layer: Control
@@ -66,8 +75,12 @@ func _build_ui() -> void:
 	_depth_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_biome_label = _label(root, 10, Color("#8b9bb4"))
 	_biome_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_gold_label = _label(root, 12, Color("#feae34"))
-	_gold_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var gold_row := HBoxContainer.new()
+	gold_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	gold_row.add_theme_constant_override("separation", 3)
+	root.add_child(gold_row)
+	gold_row.add_child(_sprite("currency/oro.png", 1))
+	_gold_label = _label(gold_row, 12, Color("#feae34"))
 	_stats_label = _label(root, 8, Color("#c0cbdc"))
 	_stats_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 
@@ -97,11 +110,28 @@ func _build_ui() -> void:
 	_block_holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	column.add_child(_block_holder)
 
-	_block = ColorRect.new()
+	# El bloque es un contenedor: color de respaldo + sprite del bioma + capa de grietas.
+	_block = Control.new()
 	_block.size = Vector2(side, side)
 	_block.pivot_offset = Vector2(side, side) / 2.0
 	_block.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_block_holder.add_child(_block)
+	_block_fallback = ColorRect.new()
+	_block_fallback.size = Vector2(side, side)
+	_block_fallback.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_block.add_child(_block_fallback)
+	_block_texture = _sprite("", BLOCK_SCALE)
+	_block.add_child(_block_texture)
+	_crack = _sprite("", BLOCK_SCALE)
+	_block.add_child(_crack)
+	for i in range(1, 4):
+		_crack_textures.append(_load_texture("cracks/grieta_%d.png" % i))
+
+	# El excavador a la izquierda del bloque; da un saltito con cada toque.
+	_excavator = _sprite("characters/excavador.png", CHARACTER_SCALE)
+	_excavator.position = Vector2(-BLOCK_SIZE * CHARACTER_SCALE - 4, side - BLOCK_SIZE * CHARACTER_SCALE)
+	_excavator.pivot_offset = Vector2(BLOCK_SIZE, BLOCK_SIZE * 2) * CHARACTER_SCALE / 2.0
+	_block_holder.add_child(_excavator)
 
 	_hp_bar = ProgressBar.new()
 	_hp_bar.custom_minimum_size = Vector2(side, 6)
@@ -129,13 +159,13 @@ func _build_ui() -> void:
 	var upgrades_list := _scroll_list(tabs, tr("UI_TAB_UPGRADES"))
 	for def: Dictionary in GameState.upgrade_defs():
 		var id: String = def["id"]
-		_upgrade_rows[id] = _shop_row(upgrades_list, "UPG_" + id.to_upper(),
+		_upgrade_rows[id] = _shop_row(upgrades_list, "UPG_" + id.to_upper(), "upgrades/%s.png" % id,
 				func() -> void: GameState.buy_upgrade(id))
 
 	var miners_list := _scroll_list(tabs, tr("UI_TAB_MINERS"))
 	for def: Dictionary in GameState.miner_defs():
 		var id: String = def["id"]
-		_miner_rows[id] = _shop_row(miners_list, "MINER_" + id.to_upper(),
+		_miner_rows[id] = _shop_row(miners_list, "MINER_" + id.to_upper(), "characters/%s.png" % id,
 				func() -> void: GameState.buy_miner(id))
 
 
@@ -151,10 +181,12 @@ func _scroll_list(tabs: TabContainer, title: String) -> VBoxContainer:
 	return list
 
 
-## Fila de la tienda: nombre + descripción/nivel a la izquierda, botón de compra con el costo.
-func _shop_row(parent: Control, key: String, on_buy: Callable) -> Dictionary:
+## Fila de la tienda: ícono, nombre + descripción/nivel y botón de compra con el costo.
+func _shop_row(parent: Control, key: String, icon_path: String, on_buy: Callable) -> Dictionary:
 	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 4)
 	parent.add_child(row)
+	row.add_child(_sprite(icon_path, 1))
 	var info := VBoxContainer.new()
 	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	info.add_theme_constant_override("separation", 0)
@@ -179,6 +211,30 @@ func _label(parent: Node, font_size: int, color: Color = Color.WHITE) -> Label:
 	return l
 
 
+## TextureRect de un sprite a escala entera (nearest). Si el archivo no existe queda vacío.
+func _sprite(path: String, scale_factor: int) -> TextureRect:
+	var r := TextureRect.new()
+	r.texture = _load_texture(path) if not path.is_empty() else null
+	r.stretch_mode = TextureRect.STRETCH_SCALE
+	r.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	var base := r.texture.get_size() if r.texture else Vector2(BLOCK_SIZE, BLOCK_SIZE)
+	r.custom_minimum_size = base * scale_factor
+	r.size = base * scale_factor
+	r.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return r
+
+
+func _load_texture(path: String) -> Texture2D:
+	var full := SPRITES + path
+	return load(full) if ResourceLoader.exists(full) else null
+
+
+func _block_texture_for(depth: int, biome_id: String) -> Texture2D:
+	# Variante pseudoaleatoria pero fija por metro: el mismo metro siempre se ve igual.
+	var index := posmod((depth * 1103515245 + 12345) >> 16, BLOCK_VARIANTS.size())
+	return _load_texture("blocks/%s_%s.png" % [biome_id, BLOCK_VARIANTS[index]])
+
+
 func _make_theme() -> Theme:
 	var t := Theme.new()
 	t.default_font_size = 10
@@ -196,12 +252,16 @@ func _on_block_pressed() -> void:
 	var tween := create_tween()
 	_block.scale = Vector2(0.92, 0.92)
 	tween.tween_property(_block, "scale", Vector2.ONE, 0.08)
+	var hop := create_tween()
+	_excavator.scale = Vector2(1.1, 0.9)
+	hop.tween_property(_excavator, "scale", Vector2.ONE, 0.1)
 
 
 func _on_depth_changed() -> void:
 	_depth_label.text = tr("UI_DEPTH") % GameState.depth
 	var biome := GameState.biome()
 	_biome_label.text = tr(biome["name_key"])
+	_block_texture.texture = _block_texture_for(GameState.depth, biome["id"])
 	_on_block_changed()
 
 
@@ -215,7 +275,9 @@ func _on_block_changed() -> void:
 	_hp_bar.value = fraction
 	var stage := clampi(int((1.0 - fraction) * CRACK_DARKEN.size()), 0, CRACK_DARKEN.size() - 1)
 	var biome := GameState.biome()
-	_block.color = Color(biome["color"]).darkened(CRACK_DARKEN[stage])
+	_block_fallback.color = Color(biome["color"]).darkened(CRACK_DARKEN[stage])
+	_block_fallback.visible = _block_texture.texture == null
+	_crack.texture = _crack_textures[stage - 1] if stage > 0 else null
 
 
 func _on_block_broken(gold_gain: BigNum, _count: int) -> void:

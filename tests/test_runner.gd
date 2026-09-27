@@ -28,6 +28,7 @@ func _run_all() -> void:
 	_test_game_state_flow()
 	_test_offline()
 	_test_save_roundtrip()
+	_test_sprites_present()
 	await _test_main_scene()
 
 
@@ -159,6 +160,31 @@ func _test_save_roundtrip() -> void:
 	_check(GameState.dps.gt(BigNum.zero()), "recalcula derivados al cargar")
 	GameState.from_dict({})
 	_check(GameState.depth == 0 and GameState.block_hp_left.gt(BigNum.zero()), "tolera guardado vacío")
+
+
+# --- Sprites ---
+
+## Cada elemento del balance que el juego dibuja debe tener su sprite (GDD §10).
+func _test_sprites_present() -> void:
+	print("Sprites: presentes para todo lo que se dibuja")
+	var paths: Array[String] = ["characters/excavador.png", "currency/oro.png"]
+	for i in range(1, 4):
+		paths.append("cracks/grieta_%d.png" % i)
+	for biome: Dictionary in _bal["biomes"]:
+		for v: String in ["a", "b", "c"]:
+			paths.append("blocks/%s_%s.png" % [biome["id"], v])
+	for def: Dictionary in _bal["upgrades"]:
+		paths.append("upgrades/%s.png" % def["id"])
+	for def: Dictionary in _bal["miners"]:
+		paths.append("characters/%s.png" % def["id"])
+	for p in paths:
+		var full := "res://assets/sprites/" + p
+		var ok := ResourceLoader.exists(full)
+		_check(ok, "existe " + p)
+		if ok:
+			var tex: Texture2D = load(full)
+			var expected := 16 if p.begins_with("currency/") else 32
+			_check(tex.get_width() == expected and tex.get_height() == expected, "tamaño de " + p)
 
 
 # --- UI ---
