@@ -1,0 +1,35 @@
+{
+	"version": 1,
+	"tap": {
+		"base_damage": 1
+	},
+	"block": {
+		"hp_base": 5,
+		"hp_growth": 1.07,
+		"gold_base": 2,
+		"gold_growth": 1.065
+	},
+	"offline": {
+		"base_hours": 2,
+		"min_seconds": 60,
+		"max_blocks": 20000
+	},
+	"biomes": [
+		{ "id": "tierra",  "name_key": "BIOME_TIERRA",  "from_depth": 0,    "color": "#b86f50", "accent": "#733e39" },
+		{ "id": "cristal", "name_key": "BIOME_CRISTAL", "from_depth": 100,  "color": "#0099db", "accent": "#68386c" },
+		{ "id": "lava",    "name_key": "BIOME_LAVA",    "from_depth": 300,  "color": "#e43b44", "accent": "#3e2731" },
+		{ "id": "ruinas",  "name_key": "BIOME_RUINAS",  "from_depth": 600,  "color": "#e4a672", "accent": "#3e8948" },
+		{ "id": "abismo",  "name_key": "BIOME_ABISMO",  "from_depth": 1000, "color": "#262b44", "accent": "#b55088" }
+	],
+	"upgrades": [
+		{ "id": "pico_reforzado", "effect": "tap_flat",      "value": 1,    "base_cost": 10,  "cost_growth": 1.15 },
+		{ "id": "guantes",        "effect": "tap_pct",       "value": 0.10, "base_cost": 50,  "cost_growth": 1.18 },
+		{ "id": "carretilla",     "effect": "gold_pct",      "value": 0.10, "base_cost": 100, "cost_growth": 1.2 },
+		{ "id": "casco_luz",      "effect": "miner_pct",     "value": 0.10, "base_cost": 250, "cost_growth": 1.2 },
+		{ "id": "mapa_antiguo",   "effect": "offline_hours", "value": 0.5,  "base_cost": 500, "cost_growth": 1.5, "max_level": 12 }
+	],
+	"miners": [
+		{ "id": "aprendiz", "dps": 1, "base_cost": 15,  "cost_growth": 1.15 },
+		{ "id": "veterano", "dps": 8, "base_cost": 250, "cost_growth": 1.15 }
+	]
+}

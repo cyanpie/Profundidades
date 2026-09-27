@@ -1,0 +1,39 @@
+keys,es,en
+UI_DEPTH,%s m,%s m
+UI_GOLD,Oro: %s,Gold: %s
+UI_DPS,Mineros: %s/s,Miners: %s/s
+UI_TAP_DAMAGE,Toque: %s,Tap: %s
+UI_TAB_UPGRADES,Mejoras,Upgrades
+UI_TAB_MINERS,Mineros,Miners
+UI_LEVEL,Nv. %d,Lv. %d
+UI_OWNED,x%d,x%d
+UI_MAX,MÁX,MAX
+UI_NEW_BIOME,Has llegado a: %s,You reached: %s
+UI_OFFLINE_TITLE,Mientras no estabas,While you were away
+UI_OFFLINE_BODY,"Tus mineros cavaron %s m
+y ganaron %s de oro
+en %s.","Your miners dug %s m
+and earned %s gold
+in %s."
+UI_OK,¡Genial!,Great!
+UI_HOURS_MINUTES,%d h %d min,%d h %d min
+UI_MINUTES,%d min,%d min
+BIOME_TIERRA,Tierra,Topsoil
+BIOME_CRISTAL,Cavernas de cristal,Crystal Caverns
+BIOME_LAVA,Río de lava,Lava River
+BIOME_RUINAS,Ruinas antiguas,Ancient Ruins
+BIOME_ABISMO,El Abismo,The Abyss
+UPG_PICO_REFORZADO,Pico reforzado,Reinforced Pickaxe
+UPG_PICO_REFORZADO_DESC,+1 daño por toque,+1 tap damage
+UPG_GUANTES,Guantes de minero,Mining Gloves
+UPG_GUANTES_DESC,+10% daño por toque,+10% tap damage
+UPG_CARRETILLA,Carretilla,Wheelbarrow
+UPG_CARRETILLA_DESC,+10% oro por bloque,+10% gold per block
+UPG_CASCO_LUZ,Casco con luz,Headlamp Helmet
+UPG_CASCO_LUZ_DESC,+10% daño de mineros,+10% miner damage
+UPG_MAPA_ANTIGUO,Mapa antiguo,Ancient Map
+UPG_MAPA_ANTIGUO_DESC,+30 min de tope offline,+30 min offline cap
+MINER_APRENDIZ,Aprendiz,Apprentice
+MINER_APRENDIZ_DESC,1 daño/s,1 damage/s
+MINER_VETERANO,Veterano,Veteran
+MINER_VETERANO_DESC,8 daño/s,8 damage/s

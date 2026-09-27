@@ -1,0 +1,45 @@
+; Engine configuration file.
+; Profundidades — ver GDD.md y CLAUDE.md
+
+config_version=5
+
+[application]
+
+config/name="Profundidades"
+config/description="Idle de excavación en pixel art para Android."
+run/main_scene="res://scenes/main.tscn"
+config/features=PackedStringArray("4.7", "GL Compatibility")
+config/icon="res://icon.svg"
+
+[autoload]
+
+Balance="*res://scripts/autoload/balance.gd"
+GameState="*res://scripts/autoload/game_state.gd"
+SaveManager="*res://scripts/autoload/save_manager.gd"
+
+[display]
+
+window/size/viewport_width=270
+window/size/viewport_height=480
+window/size/window_width_override=540
+window/size/window_height_override=960
+window/stretch/mode="viewport"
+window/stretch/aspect="keep_width"
+window/stretch/scale_mode="integer"
+window/handheld/orientation=1
+
+[gui]
+
+theme/default_font_antialiasing=0
+
+[internationalization]
+
+locale/translations=PackedStringArray("res://data/translations.es.translation", "res://data/translations.en.translation")
+locale/fallback="es"
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+textures/canvas_textures/default_texture_filter=0
+2d/snap/snap_2d_transforms_to_pixel=true
